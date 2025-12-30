@@ -1,5 +1,6 @@
 pipeline {
-    agent { docker { image 'mcr.microsoft.com/playwright:v1.57.0-noble' } }
+    agent any
+    // agent { docker { image 'mcr.microsoft.com/playwright:v1.57.0-noble' } }
 
     tools {
         // Must match the name you gave in Manage Jenkins -> Tools
