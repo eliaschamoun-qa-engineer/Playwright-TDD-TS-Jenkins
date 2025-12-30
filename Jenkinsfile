@@ -1,43 +1,37 @@
 pipeline {
-    agent any
-    // agent { docker { image 'mcr.microsoft.com/playwright:v1.57.0-noble' } }
-
-    tools {
-        // Must match the name you gave in Manage Jenkins -> Tools
-        nodejs 'NodeJS' 
+    // This image ALREADY has Node.js, Playwright, and Browsers installed
+    agent { 
+        docker { 
+            image 'mcr.microsoft.com/playwright:v1.57.0-noble' 
+        } 
     }
 
     stages {
         stage('Cleanup') {
             steps {
-                // Deletes previous results so you don't see old data
-                bat 'if exist playwright-report rmdir /s /q playwright-report'
-                bat 'if exist results.xml del /q results.xml'
+                // Since the Docker image is Linux-based (Noble), we use 'sh' instead of 'bat'
+                sh 'rm -rf playwright-report results.xml'
             }
         }
 
         stage('Install') {
             steps {
-                bat 'npm ci'
-                bat 'npx playwright install --with-deps'
+                // Use 'sh' because Docker containers usually run Linux
+                sh 'npm ci'
             }
         }
 
         stage('Run Tests') {
             steps {
-                // This runs your specific smoke test
-                // We use 'call' to ensure batch continues to the reporting stage
-                bat 'call npx playwright test tests/spec/e2e/smoke/homepage.spec.ts --project chromium'
+                // No need for 'npx playwright install' because the Docker image has browsers!
+                sh 'npx playwright test tests/spec/e2e/smoke/homepage.spec.ts --project chromium'
             }
         }
     }
 
     post {
         always {
-            // This processes the XML file you configured in playwright.config.ts
             junit 'results.xml'
-
-            // This publishes the beautiful HTML report with videos/screenshots
             publishHTML(target: [
                 allowMissing: false,
                 alwaysLinkToLastBuild: true,
